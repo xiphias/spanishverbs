@@ -1,3 +1,4 @@
+
 # ------------------------------ SPANISH ---------------------------------
 vtype = (verb) -> 
   verb.substr(-2, 2)
@@ -17,7 +18,7 @@ pastParticipleBase = (verb) ->
         base(verb) + 'ad'
   else
        base(verb) + 'id'
-        
+
 # Befejezett melléknévi igenév        
 participo = (verb) ->
   pastParticipleBase(verb) + 'o'
@@ -53,9 +54,9 @@ translationFromEnglish =  {
                            'she': 'ella',
                            'it': '',
                            'you (inf)': 'usted',
-                           'we': 'nosotros / nosotras',
-                           'you all': 'vosotros / vosotras',
-                           'they': 'ellos / ellas',
+                           'we': 'nosotros',
+                           'you all': 'vosotros',
+                           'they': 'ellos',
                            'you all (inf)': 'ustedes',
                            'speak': 'hablar',
                            'eat': 'comer',
@@ -147,7 +148,7 @@ englishs = (verb) ->
 pastEnglish = (verb, person) ->
   if (verb == 'be')
         return ['was', 'were', 'was', 'were', 'were', 'were'][person]
-  exceptions = {'speak' : 'spoke', 'eat': 'ate', 'split' : 'split', 'love' : 'loved'}
+  exceptions = {'speak' : 'spoke', 'eat': 'ate', 'split' : 'split (past)', 'love' : 'loved', 'live': 'lived'}
   if exceptions[verb]
         exceptions[verb]
   else
@@ -155,7 +156,7 @@ pastEnglish = (verb, person) ->
 
 
 perfectEnglish = (verb) ->
-  exceptions = {'speak' : 'spoken', 'eat': 'eaten', 'split' : 'split', 'love' : 'loved'}
+  exceptions = {'speak' : 'spoken', 'eat': 'eaten', 'split' : 'split', 'love' : 'loved', 'live': 'lived'}
   if exceptions[verb]
         exceptions[verb]
   else
@@ -165,17 +166,24 @@ presentEnglish = (verb, person) ->
             if (verb == 'be')
               a = ['am', 'are', 'is', 'are', 'are', 'are']
               a[person]
-            else if (person == '2')
+            else if (parseInt(person) == 2)
                 englishs(verb)
             else
                 verb
                 
 String::capitalize = -> @substr(0, 1).toUpperCase() + @substr(1)
 continuousEnglish = (verb) ->
-    verb + 'ing'
+    if verb.substr(verb.length - 1) == 'e'
+      verbWithoutE = verb.substr(0, verb.length - 1)
+    else
+      verbWithoutE = verb 
+    verbWithoutE + 'ing'
 
 sentences = (features) ->
-    englishI = englishIndicative[features['person']][0]
+    englishIList = englishIndicative[features['person']]
+    if not englishIList
+      throw "Can't find english indicative list from features: " + JSON.stringify(features)
+    englishI = englishIList[0]
     spanishI = translationFromEnglish[englishI]
     reverseIfNecessary = (a) ->
       if (features['reverse'])
@@ -187,6 +195,8 @@ sentences = (features) ->
     else
         verbENoConj = features['verb']
         verbSNoConj = translationFromEnglish[verbENoConj]
+        if (verbSNoConj == undefined)
+          throw "No spanish verb for " + verbENoConj
         if features['tense'] == 'imperative'
              return reverseIfNecessary([verbENoConj.capitalize() + '!',
                  imperative(verbSNoConj, features['person']).capitalize() + '!'])
@@ -225,51 +235,44 @@ sentences = (features) ->
             verbS = present(verbSNoConj, features['person'])
         if features['hidei']
                 reverseIfNecessary([englishI.capitalize() + ' ' + verbE + '.',
-                 verbS.capitalize() + '.'])
+                  verbS.capitalize() + '.'])
         else
                 reverseIfNecessary([englishI.capitalize() + ' ' + verbE + '.',
-                 spanishI.capitalize() + ' ' + verbS + '.'])
+                  spanishI.capitalize() + ' ' + verbS + '.'])
+
+#regularVerbs = ['hablar', 'comer', 'vivir', 'amar', 'partir']
+regularVerbs = ['speak', 'eat', 'live', 'love', 'split']
+
+allPossibleFeatures = ->
+  r = []
+  for tense in [
+    null, 'present', 'simple past', 'going to', 'present perfect', 'past continuous',
+     'past perfect continuous', 'future simple', 'future perfect', 'conditional', 'imperative', 'negative imperative'
+   ]
+    possibleVerbs = regularVerbs
+    if tense == null
+      possibleVerbs = [null]
+    for verb in possibleVerbs
+      possiblePersons = [0, 1, 2, 3, 4, 5]
+      if tense == 'imperative' or tense == 'negative imperative'
+        possiblePersons = [1]
+      for person in possiblePersons
+        possibleHidei = [true, null]
+        if tense == 'imperative' or tense == 'negative imperative' || tense == null
+          possibleHidei = [null]
+        if tense == 'past continuous' && (person == 0 || person == 2)
+          # partirá
+          possibleHidei = [null]
+        for hidei in possibleHidei
+          for reverse in [true, null]
+            r.push({tense: tense, verb: verb, person: person, hidei: hidei, reverse: reverse})
+  return r
+
+define("spanish",
+ {
+      sentences: sentences,
+      allPossibleFeatures: allPossibleFeatures,
+      regularVerbs: regularVerbs
+  }
+  )
         
-        
-test "sentences", () ->
-    equal JSON.stringify(
-         sentences({'person' : '0'})), '["I","yo"]'
-    equal JSON.stringify(
-        sentences({'tense' : 'present', 'verb' : 'speak', 'person' : '0'})),
-        '["I speak.","Yo hablo."]'
-    equal JSON.stringify(
-        sentences({'tense' : 'simple past', 'verb' : 'speak', 'person' : '2'})),
-        '["He spoke.","Él habló."]'
-    equal JSON.stringify(
-        sentences({'tense' : 'going to', 'verb' : 'speak', 'person' : '1'})),
-        '["You are going to speak.","Tú vas a hablar."]'
-    equal JSON.stringify(
-        sentences({'tense' : 'going to', 'verb' : 'speak', 'person' : '1', 'hidei': 'true'})),
-        '["You are going to speak.","Vas a hablar."]'    
-    equal JSON.stringify(
-        sentences({'tense' : 'present perfect', 'verb' : 'eat', 'person' : '0'})),
-        '["I have eaten.","Yo he comido."]'
-    equal JSON.stringify(
-        sentences({'tense' : 'past continuous', 'verb' : 'eat', 'person' : '2'})),
-        '["He was eating.","Él comía."]'
-    equal JSON.stringify(
-        sentences({'tense' : 'past perfect continuous', 'verb' : 'study', 'person' : '1'})),
-        '["You have been studying.","Tú habías estudiado."]'
-    equal JSON.stringify(
-        sentences({'tense' : 'future simple', 'verb' : 'talk', 'person' : '1'})),
-        '["You will talk.","Tú hablarás."]'    
-    equal JSON.stringify(
-        sentences({'tense' : 'future perfect', 'verb' : 'talk', 'person' : '1'})),
-        '["You will have talked.","Tú habrás hablado."]'  
-    equal JSON.stringify(
-        sentences({'tense' : 'conditional', 'verb' : 'talk', 'person' : '1'})),
-        '["You would talk.","Tú hablarías."]'
-     equal JSON.stringify(
-        sentences({'tense' : 'imperative', 'verb' : 'enter', 'person' : '1'})),
-        '["Enter!","Entra!"]' 
-      equal JSON.stringify(
-        sentences({'tense' : 'negative imperative', 'verb' : 'enter', 'person' : '1'})),
-        '["Do not enter!","No entres!"]' 
-      equal JSON.stringify(
-        sentences({'tense' : 'negative imperative', 'verb' : 'enter', 'person' : '1', 'reverse': true})),
-        '["No entres!","Do not enter!"]' 

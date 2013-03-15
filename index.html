@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title>Spanish verbs advenced trainer</title>
+  <script type="text/javascript" src="jquery.min.js"></script>
+  <script type="text/javascript" src="coffee-script.min.js"></script>
+  <script type="text/javascript" src="require.min.js"></script>
+  <script type="text/javascript" src="underscore-min.js"></script>
+
+  <script type='text/javascript' src="angular.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="bootstrap-combined.min.css">
+  <script type='text/javascript' src="bootstrap.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="bootstrap-responsive.min.css">
+  <link rel="stylesheet" type="text/css" href="bootstrap-combined.no-icons.min.css">
+  <script type='text/javascript' src="angular-ui.min.js"></script>
+  <script type='text/javascript' src="angular-strap.min.js"></script>
+  <script type="text/javascript" src="numeric.js"></script>
+
+  <script type="text/coffeescript" src="linear_interpolator.coffee"></script>
+  <script type="text/coffeescript" src="spanish.coffee"></script>
+    <script type="text/coffeescript" src="db.coffee"></script>
+  <script type="text/coffeescript" src="algorithm.coffee"></script>
+  <script type="text/coffeescript" src="scheduler.coffee"></script>
+
+<!--
+    <link rel="stylesheet" type="text/css" href="qunit.css">
+  <script type='text/javascript' src="qunit.js"></script>
+
+  <script type="text/coffeescript" src="linear_interpolator_test.coffee"></script>
+  <script type="text/coffeescript" src="scheduler_test.coffee"></script>
+  <script type="text/coffeescript" src="algorithm_test.coffee"></script>
+  <script type="text/coffeescript" src="spanish_test.coffee"></script>
+-->
+
+  <script type="text/coffeescript" src="ui.coffee"></script>
+
+
+  <style type='text/css'>
+    
+  </style>
+  
+</head>
+<body>
+
+  <div ng-controller="MainCtrl">
+
+    <p>{{originalLanguage}}: {{originalSentence}}</p>
+    
+    <button class="btn btn-primary" ng-click="set({'targetShown': true})" ui-if="!targetShown">Show</button>
+    
+    <div ui-if="targetShown">
+        <p>{{targetLanguage}}: {{targetSentence}}</p><p>
+        <button class="btn btn-danger" ng-click="pressed(false)">Bad</button>
+        <button class="btn btn-primary" ng-click="pressed(true)">Good</button>
+
+        </p>
+    </div>
+<br><br><br>
+
+<p>RMSPE: {{benchmark}}  (sample size: {{logs.length}})</p>
+
+<!--
+<div ng-repeat="row in logs">
+    {{row.id}} {{row.properties}}  {{row.time}}
+    </div>-->
+
+    <br>
+
+
+<div ui-if="showTests">
+<h1 id="qunit-header">Unit Tests</h1>
+<h2 id="qunit-banner"></h2>
+<div id="qunit-testrunner-toolbar"></div>
+<ol id="qunit-tests"></ol>
+<div id="qunit-fixture"></div>
+</div>
+</div>
+
+<script>document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=2"></' + 'script>')</script>
+
+</body>
+
+
+</html>
